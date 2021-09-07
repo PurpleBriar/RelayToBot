@@ -1,0 +1,12 @@
+{
+  "Relay": {
+    "Mode": "http"
+  },
+  "Http": {
+    "Namespace": "",
+    "ConnectionName": "",
+    "PolicyName": "",
+    "PolicyKey": "",
+    "TargetServiceAddress": ""
+  }
+}
