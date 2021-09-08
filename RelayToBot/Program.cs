@@ -6,6 +6,7 @@ using System.IO;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace RelayToBot
 {
@@ -20,6 +21,7 @@ namespace RelayToBot
         private static string TargetHttpRelay;
         private static bool IsHttpRelayMode;
         private static string ConnectionStatus = "offline";
+        private static IServiceProvider ServiceProvider;
 
         static void Main(string[] args)
         {
@@ -58,6 +60,10 @@ namespace RelayToBot
 
             ConnectionName = UserConfig[$"{configHeader}:ConnectionName"];
             TargetHttpRelay = UserConfig[$"{configHeader}:TargetServiceAddress"];
+
+            ServiceProvider = new ServiceCollection()
+                .AddHttpClient()
+                .BuildServiceProvider();
 
             try
             {
@@ -155,8 +161,9 @@ namespace RelayToBot
             try
             {
                 // Send the request message via Http
-                using (var httpClient = new HttpClient { BaseAddress = new Uri(TargetHttpRelay, UriKind.RelativeOrAbsolute) })
+                using (var httpClient = ServiceProvider.GetService<IHttpClientFactory>().CreateClient())
                 {
+                    httpClient.BaseAddress = new Uri(TargetHttpRelay, UriKind.RelativeOrAbsolute);
                     httpClient.DefaultRequestHeaders.ExpectContinue = false;
                     return await httpClient.SendAsync(requestMessage);
                 }
