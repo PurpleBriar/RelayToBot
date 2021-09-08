@@ -13,7 +13,6 @@ namespace RelayToBot
 {
     class HttpListener
     {
-        //private readonly HttpClient _httpClient = null;
         private readonly HybridConnectionListener _listener;
 
         public CancellationTokenSource CTS { get; set; }
@@ -83,32 +82,6 @@ namespace RelayToBot
             return requestMessage;
         }
 
-
-        /// <summary>
-        /// Sends the response to the server
-        /// </summary>
-        /// <param name="context"></param>
-        /// <param name="responseMessage"></param>
-        /// <returns></returns>
-        public static async Task SendResponseAsync(RelayedHttpListenerContext context, HttpResponseMessage responseMessage)
-        {
-            context.Response.StatusCode = responseMessage.StatusCode;
-            context.Response.StatusDescription = responseMessage.ReasonPhrase;
-            foreach (var header in responseMessage.Headers)
-            {
-                if (string.Equals(header.Key, "Transfer-Encoding"))
-                {
-                    continue;
-                }
-
-                context.Response.Headers.Add(header.Key, string.Join(",", header.Value));
-            }
-
-            var responseStream = await responseMessage.Content.ReadAsStreamAsync();
-            await responseStream.CopyToAsync(context.Response.OutputStream);
-        }
-
-
         /// <summary>
         /// Sends the error response
         /// </summary>
@@ -158,7 +131,6 @@ namespace RelayToBot
         /// <returns></returns>
         public Task CloseAsync()
         {
-            //if (_httpClient != null) _httpClient.Dispose();
             return _listener.CloseAsync(CTS.Token);
         }
     }
