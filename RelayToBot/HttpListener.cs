@@ -13,7 +13,7 @@ namespace RelayToBot
 {
     class HttpListener
     {
-        private readonly HttpClient _httpClient = null;
+        //private readonly HttpClient _httpClient = null;
         private readonly HybridConnectionListener _listener;
 
         public CancellationTokenSource CTS { get; set; }
@@ -28,7 +28,7 @@ namespace RelayToBot
         /// <param name="targetServiceAddress"></param>
         /// <param name="eventHandler"></param>
         /// <param name="cts"></param>
-        public HttpListener(string relayNamespace, string connectionName, string keyName, string key, string targetServiceAddress, Action<string> eventHandler, CancellationTokenSource cts)
+        public HttpListener(string relayNamespace, string connectionName, string keyName, string key, Action<string> eventHandler, CancellationTokenSource cts)
         {
             CTS = cts;
 
@@ -39,13 +39,6 @@ namespace RelayToBot
             _listener.Connecting += (o, e) => { eventHandler("connecting"); };
             _listener.Offline += (o, e) => { eventHandler("offline"); };
             _listener.Online += (o, e) => { eventHandler("online"); };
-
-            if (!string.IsNullOrEmpty(targetServiceAddress))
-            {
-                // Send the request message via Http
-                _httpClient = new HttpClient { BaseAddress = new Uri(targetServiceAddress, UriKind.RelativeOrAbsolute) };
-                _httpClient.DefaultRequestHeaders.ExpectContinue = false;
-            }
         }
 
 
@@ -86,9 +79,6 @@ namespace RelayToBot
             }
 
             await Logger.LogRequestActivityAsync(requestMessage);
-
-            //var requestMessageSer = await RelayedHttpListenerRequestSerializer.SerializeAsync(requestMessage);
-            //var deserializedRequestMessage = RelayedHttpListenerRequestSerializer.Deserialize(requestMessageSer);
 
             return requestMessage;
         }
@@ -168,53 +158,8 @@ namespace RelayToBot
         /// <returns></returns>
         public Task CloseAsync()
         {
-            if (_httpClient != null) _httpClient.Dispose();
+            //if (_httpClient != null) _httpClient.Dispose();
             return _listener.CloseAsync(CTS.Token);
-        }
-
-
-        /// <summary>
-        /// Creates and sends the Http Request message
-        /// </summary>
-        /// <param name="context"></param>
-        /// <returns></returns>
-        public async Task<HttpResponseMessage> SendHttpRequestMessageAsync(RelayedHttpListenerContext context, string connectionName)
-        {
-            var requestMessage = new HttpRequestMessage();
-            if (context.Request.HasEntityBody)
-            {
-                requestMessage.Content = new StreamContent(context.Request.InputStream);
-                var contentType = context.Request.Headers[HttpRequestHeader.ContentType];
-                if (!string.IsNullOrEmpty(contentType))
-                {
-                    requestMessage.Content.Headers.ContentType = MediaTypeHeaderValue.Parse(contentType);
-                }
-            }
-
-            var relativePath = context.Request.Url.GetComponents(UriComponents.PathAndQuery, UriFormat.Unescaped);
-            relativePath = relativePath.Replace($"/{connectionName}/", string.Empty, StringComparison.OrdinalIgnoreCase);
-            requestMessage.RequestUri = new Uri(relativePath, UriKind.RelativeOrAbsolute);
-            requestMessage.Method = new HttpMethod(context.Request.HttpMethod);
-
-            foreach (var headerName in context.Request.Headers.AllKeys)
-            {
-                if (string.Equals(headerName, "Host", StringComparison.OrdinalIgnoreCase) ||
-                    string.Equals(headerName, "Content-Type", StringComparison.OrdinalIgnoreCase))
-                {
-                    // Don't flow these headers here
-                    continue;
-                }
-
-                requestMessage.Headers.Add(headerName, context.Request.Headers[headerName]);
-            }
-
-            await Logger.LogRequestActivityAsync(requestMessage);
-
-            //var requestMessageSer = await RelayedHttpListenerRequestSerializer.SerializeAsync(requestMessage);
-            //var deserializedRequestMessage = RelayedHttpListenerRequestSerializer.Deserialize(requestMessageSer);
-
-            // Send the request message via Http
-            return (_httpClient != null) ? await _httpClient.SendAsync(requestMessage) : null;
         }
     }
 }

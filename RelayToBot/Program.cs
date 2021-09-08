@@ -45,7 +45,7 @@ namespace RelayToBot
             MidSectionFiller = string.Empty.PadRight(Logger.MidPad, ' ');
 
             UserConfig = new ConfigurationBuilder()
-                .AddJsonFile("RelayToBot.json", false, true) //.AddJsonFile(args[0], false, true)
+                .AddJsonFile("RelayToBot.json", false, true) 
                 .Build();
 
             IsHttpRelayMode = UserConfig["Relay:Mode"].Equals("http", StringComparison.CurrentCultureIgnoreCase);
@@ -75,7 +75,6 @@ namespace RelayToBot
                             ConnectionName,
                             keyName,
                             key,
-                            TargetHttpRelay,
                             ConnectionEventHandler,
                             new CancellationTokenSource());
 
@@ -126,9 +125,6 @@ namespace RelayToBot
                 var requestMessage = await HttpListener.CreateHttpRequestMessageAsync(context, ConnectionName);
                 var responseMessage = await SendHttpRequestAsync(requestMessage);
                 Logger.LogRequest(requestMessage.Method.Method, requestMessage.RequestUri.LocalPath, $"\u001b[32m {responseMessage.StatusCode} \u001b[0m", $"Forwarded to {TargetHttpRelay}.", ShowAll);
-
-                // Send the response message back to the caller
-                // await HttpListener.SendResponseAsync(context, responseMessage);
             }
             catch (RelayException re)
             {
